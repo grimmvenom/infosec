@@ -1,5 +1,7 @@
-# Usage
-# run script directly from powershell for quick standard checks
+#
+# WindowsEnum.ps1
+# Author: GrimmVenom
+# Perform post exploitation enumeration on Windows via PowerShell
 #
 # For quick standard checks directly from CMD:
 # powershell -nologo -executionpolicy bypass -file WindowsEnum.ps1
@@ -8,6 +10,8 @@
 # PS C:\> .\WindowsEnum.ps1 extended
 # From CMD:
 # powershell -nologo -executionpolicy bypass -file WindowsEnum.ps1 extended
+# Original Author https://github.com/absolomb/WindowsEnum/blob/master/WindowsEnum.ps1
+
 
 
 param($extended)

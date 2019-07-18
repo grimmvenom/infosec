@@ -1,5 +1,8 @@
 REM Windows Enumeration Batch Script
-REM Author:     GrimmVenom
+REM Author: GrimmVenom
+REM Original Authors:
+REM https://github.com/azmatt/windowsEnum/blob/master/windowsEnum.bat
+REM https://github.com/M4ximuss/Powerless/blob/master/Powerless.bat
 REM Resources:
 REM https://www.fuzzysecurity.com/tutorials/16.html
 REM http://toshellandback.com/2015/11/24/ms-priv-esc/
