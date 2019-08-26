@@ -2,6 +2,9 @@
 # Resource: https://github.com/Hack-with-Github/Awesome-Hacking
 # https://github.com/darkoperator?tab=repositories
 
+# Checkout Frank's Scripts:
+https://github.com/routeback/bashscripts
+
 # Chef Cookbooks
 ## OS Hardening
 https://github.com/dev-sec/chef-os-hardening/
