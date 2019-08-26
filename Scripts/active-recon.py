@@ -298,7 +298,9 @@ class ActiveRecon:
 		DATE_FORMAT = '%Y-%m-%d'
 		# flat = flatten(self.basic_results)
 		# print(json.dumps(flat, indent=4, sort_keys=True))
+		# https://python-cloudant.readthedocs.io/en/latest/getting_started.html#opening-a-database
 		server = couchdb.Server()
+		db = server.create('Test')
 		
 		
 if __name__ == "__main__":
