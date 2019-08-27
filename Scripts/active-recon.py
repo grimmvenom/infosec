@@ -16,6 +16,7 @@ from datetime import datetime
 import requests, socket, ipaddress
 from netifaces import interfaces, ifaddresses, AF_INET
 import couchdb
+from uuid import uuid4
 # from flatten_json import flatten
 # import multiprocessing
 # from multiprocessing import Pool
@@ -93,15 +94,14 @@ class ActiveRecon:
 	def __init__(self):
 		self.arguments = get_arguments()
 		self.current_directory = os.path.dirname(os.path.realpath(__file__))
+		self.date = "date_" + str(time.strftime("%Y_%m_%d"))
 		if not self.arguments.output_dir:
 			self.arguments.output_dir = self.current_directory + os.sep + 'results'
 			if not os.path.exists(self.arguments.output_dir):
 				print("Creating: " + str(self.arguments.output_dir))
 				os.makedirs(self.arguments.output_dir)
 		if not self.arguments.database:
-			self.arguments.dabatabase = self.current_directory + os.sep + 'temp.db'
-		elif self.arguments.database and not str(os.sep) in str(self.arguments.database):
-			self.arguments.dabatabase = self.current_directory + os.sep + str(self.arguments.database)
+			self.arguments.database = self.date
 		self.local_data = self.get_local_info()  # Get Attacking Machine Information
 		self.ping_results = dict()
 		self.basic_results = dict()
@@ -111,7 +111,7 @@ class ActiveRecon:
 		local_data = dict()
 		try:
 			host_name = socket.gethostname()
-			local_data['Attacking_HostName'] = host_name
+			local_data['HostName'] = host_name
 		
 		# print("Hostname :  ", host_name)
 		# print("Local IP : ", host_ip)
@@ -130,7 +130,7 @@ class ActiveRecon:
 				socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
 			"""
 			IPAddr = [ifaddresses(face)[AF_INET][0]["addr"] for face in interfaces() if AF_INET in ifaddresses(face)]
-			local_data['Attacking_IP'] = IPAddr
+			local_data['IP_Address'] = IPAddr
 		except Exception as e:
 			print("Unable to find local IP")
 			print(e)
@@ -139,7 +139,7 @@ class ActiveRecon:
 		
 		try:
 			external_ip = requests.get('https://api.ipify.org').text
-			local_data['Attacking_External_IP'] = external_ip
+			local_data['External_IP_Address'] = external_ip
 		except Exception as e:
 			print("Unable to find external IP")
 			print(e)
@@ -156,7 +156,8 @@ class ActiveRecon:
 	def nmap_ping_sweep(self, target):
 		print("Performing Quick Ping Sweep on: ", str(target), "\n------------------")
 		nm = nmap.PortScanner()
-		nm.scan(hosts=target, arguments='-n -Pn -sT -p 21,23,80,443,139,445,3389')
+		# nm.scan(hosts=target, arguments='-n -Pn -v -sT -p 21,23,80,443,139,445,3389')
+		nm.scan(hosts=target, arguments='-n -Pn -v -sn')
 		hosts_list = [(x, nm[x]['status']['state']) for x in nm.all_hosts()]
 		for host, status in hosts_list:
 			# std = str('{0}:{1}'.host)
@@ -166,7 +167,7 @@ class ActiveRecon:
 	
 	def main(self):
 		self.basic_requirements()  # Run basic scan
-	
+		
 	def basic_requirements(self):  # Define Process for Parsing Results from a single target at a time
 		for target in self.arguments.targets:
 			self.nmap_ping_sweep(target)
@@ -176,6 +177,7 @@ class ActiveRecon:
 				# self.results_to_database()
 			else:
 				print("Target did not appear to be online")
+		self.results_to_couchdb()  # add Results to CouchDB
 	
 	def basic(self, target):  # Scans / Parses Results from a single target at a time
 		OS = dict()
@@ -190,7 +192,7 @@ class ActiveRecon:
 		print("\nPerforming Basic NMap Scan on: ", target)
 		print("======================================================")
 		nm = nmap.PortScanner()
-		nm.scan(hosts=target, arguments='-n -O -sV -sT --top-ports 30 --script=banner-plus,smb-os-discovery')
+		nm.scan(hosts=target, arguments='-n -Pn -v -O -sV -sT --top-ports 30 --script=banner-plus,smb-os-discovery')
 		
 		count = 0
 		for item in nm[target]['osmatch'][0:3]:
@@ -230,11 +232,13 @@ class ActiveRecon:
 			self.basic_results[target]["Scan_Info"]["stats"] = nm.scanstats()
 			self.basic_results[target]["Scan_Info"]["stats"]["status"] = nm[target]["status"]
 		
+		if "Auditor_Info" not in self.basic_results:
+			self.basic_results["Auditor_Info"] = self.local_data
+		
 		if 'tcp' in nm[target].keys():
 			tcp_results = nm[target]['tcp']
-		
 			for port, result in tcp_results.items():
-				if (result['state'] in ["closed", "filtered"]) or result["reason"] == "conn-refused":
+				if (result['state'] in ["closed", "filtered"]) or (result["reason"] == "conn-refused"):
 					if str(port) not in closed_ports["tcp"].keys():
 						closed_ports["tcp"][str(port)] = dict()
 					closed_ports["tcp"][str(port)] = result
@@ -249,6 +253,24 @@ class ActiveRecon:
 			self.basic_results[target]["Results"]["tcp"]["open"] = open_ports["tcp"]
 			self.basic_results[target]["Results"]["tcp"]["closed"] = closed_ports["tcp"]
 		
+		if 'udp' in nm[target].keys():
+			udp_results = nm[target]['udp']
+			for port, result in udp_results.items():
+				if (result['state'] in ["closed", "filtered"]) or (result["reason"] == "conn-refused"):
+					if str(port) not in closed_ports["udp"].keys():
+						closed_ports["udp"][str(port)] = dict()
+					closed_ports["udp"][str(port)] = result
+				else:
+					if str(port) not in open_ports["udp"].keys():
+						open_ports["udp"][str(port)] = dict()
+					open_ports["udp"][str(port)] = result
+			if "udp" not in self.basic_results[target]["Results"].keys():
+				self.basic_results[target]["Results"]["udp"] = dict()
+				self.basic_results[target]["Results"]["udp"]["open"] = dict()
+				self.basic_results[target]["Results"]["udp"]["closed"] = dict()
+			self.basic_results[target]["Results"]["udp"]["open"] = open_ports["udp"]
+			self.basic_results[target]["Results"]["udp"]["closed"] = closed_ports["udp"]
+			
 		output_file = self.arguments.output_dir + os.sep + "basic_" + str(target) + '.json'
 		print("Output File: ", str(output_file))
 		with open(output_file, 'w') as outfile:
@@ -293,16 +315,21 @@ class ActiveRecon:
 		self.advanced_scan.wait(2)  # you can do whatever you want but I choose to wait after the end of the scan
 		self.advanced_scan.stop()
 	
-	def results_to_database(self):
+	def results_to_couchdb(self):
 		print("Parsing Results to database")
-		DATE_FORMAT = '%Y-%m-%d'
-		# flat = flatten(self.basic_results)
-		# print(json.dumps(flat, indent=4, sort_keys=True))
-		# https://python-cloudant.readthedocs.io/en/latest/getting_started.html#opening-a-database
-		server = couchdb.Server()
-		db = server.create('Test')
-		
-		
+		try:
+			server = couchdb.Server()
+			if not self.arguments.database in server:
+				server.create(self.arguments.database)
+			db = server[self.arguments.database]
+			doc_id = uuid4().hex
+			print(doc_id)
+			db[doc_id] = self.basic_results
+		except Exception as e:
+			print(e)
+			pass
+
+
 if __name__ == "__main__":
 	ActiveRecon = ActiveRecon()
 	ActiveRecon.main()
