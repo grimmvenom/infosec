@@ -33,8 +33,8 @@ def get_arguments():
 	parser.add_argument('-c', '--cidr', '-n', '--network', action='store', dest='cidr', help='--c 192.168.1.0/24')
 	
 	parser.add_argument('-q', '--query', action='store', dest='nmap_query', default="basic", help='--query basic, advanced, Full, or <custom nmap flags>')
-	parser.add_argument('--output', action='store', dest='output_dir', help='--output <path to output directory>')
-	parser.add_argument('-db', '--db', '--database',  action='store', dest='database', help='-db <name of .db file to send results to>')
+	parser.add_argument('-o', '--output', action='store', dest='output_dir', help='--output <path to output directory>')
+	parser.add_argument('-db', '--database',  action='store', dest='database', help='-db "table"')
 	arguments = parser.parse_args()
 	arguments.targets = list()
 	
