@@ -28,8 +28,6 @@ from uuid import uuid4
 def get_arguments():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-t', "--target", action='append', dest='ips', help='-t <target IP>')
-	parser.add_argument('-f', "-file", action='store', dest='file', help=' -f <filepath.txt>')
-	
 	parser.add_argument('-q', '--query', action='store', dest='nmap_query', default="basic", help='--query basic, advanced, Full, or <custom nmap flags>')
 	parser.add_argument('-o', '--output', action='store', dest='output_dir', help='--output <path to output directory>')
 	parser.add_argument('-db', '--database',  action='store', dest='database', help='-db "table"')
