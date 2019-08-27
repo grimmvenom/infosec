@@ -29,8 +29,6 @@ def get_arguments():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-t', "--target", action='append', dest='ips', help='-t <target IP>')
 	parser.add_argument('-f', "-file", action='store', dest='file', help=' -f <filepath.txt>')
-	parser.add_argument('-r', '--range', action='store', dest='range', help='-r 192.186.1.1-60')
-	parser.add_argument('-c', '--cidr', '-n', '--network', action='store', dest='cidr', help='--c 192.168.1.0/24')
 	
 	parser.add_argument('-q', '--query', action='store', dest='nmap_query', default="basic", help='--query basic, advanced, Full, or <custom nmap flags>')
 	parser.add_argument('-o', '--output', action='store', dest='output_dir', help='--output <path to output directory>')
@@ -38,40 +36,34 @@ def get_arguments():
 	arguments = parser.parse_args()
 	arguments.targets = list()
 	
-	try:
-		if arguments.ips:
-			for target in arguments.ips:
-				arguments.targets.append(target)
-	except Exception as e:
-		pass
-	
-	try:
-		if arguments.range:
-			base_ip = '.'.join(arguments.range.split('-')[0].split('.')[0:3])
-			arguments.start = arguments.range.split('-')[0]
-			arguments.end = base_ip + "." + arguments.range.split('-')[1]
-		
-		if arguments.start and arguments.end:
-			print("\nIP Range Specified\n==========================")
-			print("Start: \t", arguments.start)
-			print("End: \t", arguments.end)
-			print("\n")
-			for ip in range(int(ipaddress.IPv4Address(arguments.start)), int(ipaddress.IPv4Address(arguments.end))):
-				ip = ipaddress.IPv4Address(int(ip))
-				arguments.targets.append(str(ip))
-	except Exception as e:
-		pass
-	
-	try:
-		if arguments.cidr:
-			print("\nIP CIDR Range Specified\n==========================")
-			for ip in ipaddress.IPv4Network(arguments.cidr):  # Loop through IP Addresses in Network
-				arguments.targets.append(str(ip))
-			print("# of Targets: ", str(len(arguments.targets)))
-			print("\n\n")
-	except Exception as e:
-		print(e)
-		pass
+	if arguments.ips:
+		for target in arguments.ips:
+			try:
+				if "-" in target:  # Determine IPs in Range
+					base_ip = '.'.join(target.split('-')[0].split('.')[0:3])
+					arguments.start = target.split('-')[0]
+					arguments.end = base_ip + "." + target.split('-')[1]
+				
+					if arguments.start and arguments.end:
+						print("\nIP Range Specified\n==========================")
+						print("Start: \t", arguments.start)
+						print("End: \t", arguments.end)
+						print("\n")
+						for ip in range(int(ipaddress.IPv4Address(arguments.start)), int(ipaddress.IPv4Address(arguments.end))):
+							ip = ipaddress.IPv4Address(int(ip))
+							arguments.targets.append(str(ip))
+			
+				elif "/" in target: # Determine IPs in CIDR
+					print("\nIP CIDR Range Specified for ", str(target), "\n==========================")
+					for scoped_ip in ipaddress.IPv4Network(target):  # Loop through IP Addresses in Network
+						arguments.targets.append(str(scoped_ip))
+					print("# of Targets: ", str(len(arguments.targets)))
+					print("\n\n")
+				else:
+					arguments.targets.append(target)
+			except Exception as e:
+				print(e)
+				pass
 	
 	if len(arguments.targets) < 1:
 		parser.error("must specify target, file with targets, start & end, or network to determine IPs to target")
@@ -104,6 +96,7 @@ class ActiveRecon:
 		self.basic_args = '-n -Pn -v -O -sV -sT --top-ports 200 --script=banner-plus,smb-os-discovery'
 		self.advanced_args = '-n -Pn -v -O -sV -sT -sU --top-ports 300 --script=banner-plus,smb-os-discovery'
 		self.full_args = '-n -Pn -v -O -sV -sT -sU -p0-65535 --script=banner-plus,smb-os-discovery'
+		self.scan_type = str()
 		self.local_data = self.get_local_info()  # Get Attacking Machine Information
 		self.async_scan = nmap.PortScannerAsync()
 		self.ping_results = dict()
@@ -169,6 +162,7 @@ class ActiveRecon:
 	
 	def main(self):
 		if self.arguments.nmap_query == "basic":
+			self.scan_type = "basic"
 			self.nmap_async(self.basic_args)
 			"""  # Uncomment for ping scans + individual nmap scans
 			for target in self.arguments.targets:
@@ -179,8 +173,13 @@ class ActiveRecon:
 					print("Target did not appear to be online")
 			self.results_to_couchdb(self.basic_results)  # add Results to CouchDB """
 		elif self.arguments.nmap_query == "advanced":
+			self.scan_type = "advanced"
 			self.nmap_async(self.advanced_args)
+		elif self.arguments.nmap_query == "full":
+			self.scan_type = "full"
+			self.nmap_async(self.full_args)
 		else:
+			self.scan_type = "custom"
 			self.nmap_async(str(self.arguments.nmap_query))
 	
 	def basic(self, target):  # Scans / Parses Results from a single target at a time
@@ -274,7 +273,7 @@ class ActiveRecon:
 			self.basic_results[target]["Results"]["udp"]["open"] = open_ports["udp"]
 			self.basic_results[target]["Results"]["udp"]["closed"] = closed_ports["udp"]
 			
-		output_file = self.arguments.output_dir + os.sep + "basic_" + str(target) + '.json'
+		output_file = self.arguments.output_dir + os.sep + self.scan_type + "_" + str(target) + '.json'
 		print("Output File: ", str(output_file))
 		with open(output_file, 'w') as outfile:
 			outfile.write(json.dumps(self.basic_results, indent=4, sort_keys=True))
