@@ -17,13 +17,8 @@ import requests, socket, ipaddress
 from netifaces import interfaces, ifaddresses, AF_INET
 import couchdb
 from uuid import uuid4
-# from flatten_json import flatten
-# import multiprocessing
-# from multiprocessing import Pool
-
 
 # ToDO:
-# Couch DB Output
 # SMB Enum
 # FTP
 # SMTP ENum
@@ -36,6 +31,8 @@ def get_arguments():
 	parser.add_argument('-f', "-file", action='store', dest='file', help=' -f <filepath.txt>')
 	parser.add_argument('-r', '--range', action='store', dest='range', help='-r 192.186.1.1-60')
 	parser.add_argument('-c', '--cidr', '-n', '--network', action='store', dest='cidr', help='--c 192.168.1.0/24')
+	
+	parser.add_argument('-q', '--query', action='store', dest='nmap_query', default="basic", help='--query basic, advanced, Full, or <custom nmap flags>')
 	parser.add_argument('--output', action='store', dest='output_dir', help='--output <path to output directory>')
 	parser.add_argument('-db', '--db', '--database',  action='store', dest='database', help='-db <name of .db file to send results to>')
 	arguments = parser.parse_args()
@@ -102,7 +99,13 @@ class ActiveRecon:
 				os.makedirs(self.arguments.output_dir)
 		if not self.arguments.database:
 			self.arguments.database = self.date
+		self.ping_args = '-n -Pn -v -sn'
+		# self.ping_args = '-n -Pn -v -sT -p 21,23,80,443,139,445,3389'
+		self.basic_args = '-n -Pn -v -O -sV -sT --top-ports 200 --script=banner-plus,smb-os-discovery'
+		self.advanced_args = '-n -Pn -v -O -sV -sT -sU --top-ports 300 --script=banner-plus,smb-os-discovery'
+		self.full_args = '-n -Pn -v -O -sV -sT -sU -p0-65535 --script=banner-plus,smb-os-discovery'
 		self.local_data = self.get_local_info()  # Get Attacking Machine Information
+		self.async_scan = nmap.PortScannerAsync()
 		self.ping_results = dict()
 		self.basic_results = dict()
 	
@@ -156,8 +159,7 @@ class ActiveRecon:
 	def nmap_ping_sweep(self, target):
 		print("Performing Quick Ping Sweep on: ", str(target), "\n------------------")
 		nm = nmap.PortScanner()
-		# nm.scan(hosts=target, arguments='-n -Pn -v -sT -p 21,23,80,443,139,445,3389')
-		nm.scan(hosts=target, arguments='-n -Pn -v -sn')
+		nm.scan(hosts=target, arguments=self.ping_args)
 		hosts_list = [(x, nm[x]['status']['state']) for x in nm.all_hosts()]
 		for host, status in hosts_list:
 			# std = str('{0}:{1}'.host)
@@ -166,18 +168,20 @@ class ActiveRecon:
 			self.ping_results[str(host)] = str(status)
 	
 	def main(self):
-		self.basic_requirements()  # Run basic scan
-		
-	def basic_requirements(self):  # Define Process for Parsing Results from a single target at a time
-		for target in self.arguments.targets:
-			self.nmap_ping_sweep(target)
-			# print(self.ping_results)
-			if self.ping_results[target] == 'up':
-				self.basic(target)
-				# self.results_to_database()
-			else:
-				print("Target did not appear to be online")
-		self.results_to_couchdb()  # add Results to CouchDB
+		if self.arguments.nmap_query == "basic":
+			self.nmap_async(self.basic_args)
+			"""  # Uncomment for ping scans + individual nmap scans
+			for target in self.arguments.targets:
+				self.nmap_ping_sweep(target)
+				if self.ping_results[target] == 'up':
+					self.basic(target)
+				else:
+					print("Target did not appear to be online")
+			self.results_to_couchdb(self.basic_results)  # add Results to CouchDB """
+		elif self.arguments.nmap_query == "advanced":
+			self.nmap_async(self.advanced_args)
+		else:
+			self.nmap_async(str(self.arguments.nmap_query))
 	
 	def basic(self, target):  # Scans / Parses Results from a single target at a time
 		OS = dict()
@@ -189,10 +193,9 @@ class ActiveRecon:
 		open_ports = dict()
 		open_ports["tcp"] = dict()
 		open_ports["udp"] = dict()
-		print("\nPerforming Basic NMap Scan on: ", target)
-		print("======================================================")
+		print("\nPerforming Basic NMap Scan on: ", target, "\n\n")
 		nm = nmap.PortScanner()
-		nm.scan(hosts=target, arguments='-n -Pn -v -O -sV -sT --top-ports 30 --script=banner-plus,smb-os-discovery')
+		nm.scan(hosts=target, arguments=self.basic_args)
 		
 		count = 0
 		for item in nm[target]['osmatch'][0:3]:
@@ -278,11 +281,6 @@ class ActiveRecon:
 			outfile.close()
 		# print(json.dumps(self.basic_results, indent=4, sort_keys=True))
 	
-	def advanced_requirements(self, target):
-		# Asynchronous nmap execution (output is difficult to reuse)
-		self.advanced_scan = nmap.PortScannerAsync()
-		self.nmap_async()
-	
 	def callback_result(self, host, scan_results):
 		basic_results = dict()
 		print('------------------')
@@ -298,24 +296,25 @@ class ActiveRecon:
 			with open(output_file, 'w') as outfile:
 				outfile.write(json.dumps(parsed, indent=4, sort_keys=True))
 				outfile.close()
+			self.results_to_couchdb(scan_results)
 	
-	def nmap_async(self):  # Perform Full scan and attempt to get host info such as hostname and OS, Caution! Will take a long time to execute
-		print("\nPerforming Basic NMap Scan on: ", self.arguments.targets)
+	def nmap_async(self, query):  # Perform Full scan and attempt to get host info such as hostname and OS, Caution! Will take a long time to execute
+		targets = str(','.join(map(str, self.arguments.targets)))
+		print("\nPerforming NMap Scan on: ", targets)
 		start = time.time()
-		# '-n -v -O -sV -Pn -sT -sU --top-ports 20 --script=smb-os-discovery'
-		self.advanced_scan.scan(hosts=str(self.arguments.targets), arguments='-n -sV -sT -sU -p0-65535 --script=banner-plus,smb-os-discovery',
-			callback=self.callback_result)
+		self.async_scan.scan(hosts=targets, arguments=str(query), callback=self.callback_result)
+		
 		spinner = itertools.cycle(['-', '/', '|', '\\'])
-		while self.advanced_scan.still_scanning():
+		while self.async_scan.still_scanning():
 			end = time.time()
 			sys.stdout.write('[%s] %s \r' % (spinner.__next__(), round(end - start, 2)))  # write the next character
 			sys.stdout.flush()  # flush stdout buffer (actual character display)
 			sys.stdout.write('\b')  # erase the last written char
 		print("\n")
-		self.advanced_scan.wait(2)  # you can do whatever you want but I choose to wait after the end of the scan
-		self.advanced_scan.stop()
+		self.async_scan.wait(2)  # you can do whatever you want but I choose to wait after the end of the scan
+		# self.async_scan.stop()
 	
-	def results_to_couchdb(self):
+	def results_to_couchdb(self, data):
 		print("Parsing Results to database")
 		try:
 			server = couchdb.Server()
@@ -323,12 +322,12 @@ class ActiveRecon:
 				server.create(self.arguments.database)
 			db = server[self.arguments.database]
 			doc_id = uuid4().hex
-			print(doc_id)
-			db[doc_id] = self.basic_results
+			print("UUID: ", doc_id)
+			db[doc_id] = data
 		except Exception as e:
 			print(e)
 			pass
-
+		
 
 if __name__ == "__main__":
 	ActiveRecon = ActiveRecon()
