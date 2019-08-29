@@ -1,0 +1,34 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+  - name: Update repositories cache
+    apt:
+      update_cache: yes
+
+  - name: Install a list of packages
+    apt:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - atom
+      - fish
+      - git
+      - terminator
+
+  # Example clone a repo with separate git directory
+  - git:
+      repo: https://github.com/OWASP/ASVS
+      dest: ~/Tools/OWASP/ASVS
+  - git:
+      repo: https://github.com/danielmiessler/SecLists
+      dest: ~/Tools/wordlists/SecLists
+  - git:
+      repo:  https://github.com/secfigo/Awesome-Fuzzing
+      dest: ~/Tools/wordlists/Awesome-Fuzzing
+  - git:
+      repo: https://github.com/Hack-with-Github/Awesome-Hacking
+      dest: ~/Tools/wordlists/Awesome-Hacking
+  - git:
+      repo:  https://github.com/coreb1t/awesome-pentest-cheat-sheets
+      dest: ~/Tools/cheatsheets/pentest-cheatsheets

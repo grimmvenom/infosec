@@ -27,15 +27,14 @@ from uuid import uuid4
 
 def get_arguments():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-t', "--target", action='append', dest='ips', help='-t <target IP>')
+	parser.add_argument('-t', "--target", action='append', dest='targets', help='-t target IP, CIDR Address, or IP Range')
 	parser.add_argument('-q', '--query', action='store', dest='nmap_query', default="basic", help='--query basic, advanced, Full, or <custom nmap flags>')
 	parser.add_argument('-o', '--output', action='store', dest='output_dir', help='--output <path to output directory>')
 	parser.add_argument('-db', '--database',  action='store', dest='database', help='-db "table"')
 	arguments = parser.parse_args()
-	arguments.targets = list()
-	
-	if arguments.ips:
-		for target in arguments.ips:
+	arguments.targets_list = list()
+	if arguments.targets:
+		for target in arguments.targets:
 			try:
 				if "-" in target:  # Determine IPs in Range
 					base_ip = '.'.join(target.split('-')[0].split('.')[0:3])
@@ -49,16 +48,16 @@ def get_arguments():
 						print("\n")
 						for ip in range(int(ipaddress.IPv4Address(arguments.start)), int(ipaddress.IPv4Address(arguments.end))):
 							ip = ipaddress.IPv4Address(int(ip))
-							arguments.targets.append(str(ip))
+							arguments.targets_list.append(str(ip))
 			
 				elif "/" in target: # Determine IPs in CIDR
 					print("\nIP CIDR Range Specified for ", str(target), "\n==========================")
 					for scoped_ip in ipaddress.IPv4Network(target):  # Loop through IP Addresses in Network
-						arguments.targets.append(str(scoped_ip))
+						arguments.targets_list.append(str(scoped_ip))
 					print("# of Targets: ", str(len(arguments.targets)))
 					print("\n\n")
 				else:
-					arguments.targets.append(target)
+					arguments.targets_list.append(target)
 			except Exception as e:
 				print(e)
 				pass
@@ -67,9 +66,13 @@ def get_arguments():
 		parser.error("must specify target, file with targets, start & end, or network to determine IPs to target")
 	
 	arguments.targets = set(arguments.targets)
-	tempips = [socket.inet_aton(ip) for ip in arguments.targets]
-	tempips.sort()
-	arguments.targets = [socket.inet_ntoa(ip) for ip in tempips]
+	arguments.targets_list = set(arguments.targets_list)
+	try:
+		tempips = [socket.inet_aton(ip) for ip in arguments.targets]
+		tempips.sort()
+		arguments.targets = [socket.inet_ntoa(ip) for ip in tempips]
+	except:
+		pass
 	print("\nTargets:\n==========================")
 	print(arguments.targets)
 	print("\n\n")
@@ -296,10 +299,10 @@ class ActiveRecon:
 			self.results_to_couchdb(scan_results)
 	
 	def nmap_async(self, query):  # Perform Full scan and attempt to get host info such as hostname and OS, Caution! Will take a long time to execute
-		targets = str(','.join(map(str, self.arguments.targets)))
-		print("\nPerforming NMap Scan on: ", targets)
+		# targets = str(','.join(map(str, self.arguments.targets)))
+		print("\nPerforming NMap Scan on: ", self.arguments.targets)
 		start = time.time()
-		self.async_scan.scan(hosts=targets, arguments=str(query), callback=self.callback_result)
+		self.async_scan.scan(hosts=','.join(self.arguments.targets), arguments=str(query), callback=self.callback_result)
 		
 		spinner = itertools.cycle(['-', '/', '|', '\\'])
 		while self.async_scan.still_scanning():
