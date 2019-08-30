@@ -2,11 +2,11 @@
 - hosts: all
   become: yes
   tasks:
-  - name: Update repositories cache
+  - name: "Update repositories cache"
     apt:
       update_cache: yes
 
-  - name: Install a list of packages
+  - name: "Installing list of packages"
     apt:
       name: "{{ packages }}"
     vars:
@@ -18,8 +18,6 @@
       - terminator
       - alacarte
       - htop
-      - ntop
-      - iotop
       # - gcc
 
   # ==========================================================#
@@ -35,77 +33,95 @@
   # Documentation:
   # ==========================================================#
   # Download OWASP ASVS Documentation:
-  - git:
+  - name: "Download ASVS Documentation"
+    git:
       repo: https://github.com/OWASP/ASVS
       dest: ~/Documents/OWASP-ASVS
+
   # Download Cheatsheets / Notes:
-  - git:
+  - name: "Download Awesome-Pentest-Cheat-Sheets"
+    git:
       repo:  https://github.com/coreb1t/awesome-pentest-cheat-sheets
       dest: ~/Documents/cheatsheets/
   # Download Wordlists
-  - git:
+  - name: "Download SecLists Wordlists"
+    git:
       repo: https://github.com/danielmiessler/SecLists
-      dest: /usr/share/wordlists/
-  - git:
+      dest: /usr/share/wordlists/SecLists
+  - name: "Download Awesome-Fuzzing Wordlists"
+    git:
       repo:  https://github.com/secfigo/Awesome-Fuzzing
-      dest: /usr/share/wordlists/
-  - git:
+      dest: /usr/share/wordlists/Awesome-Fuzzing
+  - name: "Download Awesome-Hacking Wordlists"
+    git:
       repo: https://github.com/Hack-with-Github/Awesome-Hacking
-      dest: /usr/share/wordlists/
+      dest: /usr/share/wordlists/Awesome-Hacking
 
-  # ==========================================================# 
+  # ==========================================================#
   # Recon / Enumeration Tools:
   # ==========================================================#
-  # EyeWitness: https://github.com/FortyNorthSecurity/EyeWitness
-  - git:
+  - name: "Download EyeWitness: https://github.com/FortyNorthSecurity/EyeWitness"
+    git:
       repo: https://github.com/FortyNorthSecurity/EyeWitness
-      dest: ~/Tools/
-  # WhatWeb:  https://github.com/urbanadventurer/WhatWeb.git
-  - git:
-      repo: https://github.com/urbanadventurer/WhatWeb.git
-      dest: ~/Tools/
-  # Responder: https://github.com/lgandx/Responder.git
-  - git:
-      repo: https://github.com/lgandx/Responder.git
-      dest: ~/Tools/
-  # Discover: https://github.com/leebaird/discover
-  - git:
-      repo: https://github.com/leebaird/discover
-      dest: ~/Tools/
-  # Sublist3r: https://github.com/aboul3la/Sublist3r.git
-  - git:
-      repo: https://github.com/aboul3la/Sublist3r.git
-      dest: ~/Tools/
-  # R3con1z3r: https://github.com/abdulgaphy/r3con1z3r
-  - git:
-      repo: https://github.com/abdulgaphy/r3con1z3r
-      dest: ~/Tools/
-  # Th3Inspecter: https://github.com/Moham3dRiahi/Th3inspector
-  - git:
-      repo: https://github.com/Moham3dRiahi/Th3inspector
-      dest: ~/Tools/
-  # Photon: https://github.com/s0md3v/Photon
-  - git:
-      repo: https://github.com/s0md3v/Photon
-      dest: ~/Tools/
-  # DNS Recon: https://github.com/darkoperator/dnsrecon
-  - git:
-      repo: https://github.com/darkoperator/dnsrecon
-      dest: ~/Tools/
-  # Impacket: https://github.com/CoreSecurity/impacket.git
-  - git:
-      repo: https://github.com/CoreSecurity/impacket.git
-      dest: ~/Tools/
+      dest: ~/Tools/EyeWitness
 
+  - name: "Download WhatWeb:  https://github.com/urbanadventurer/WhatWeb.git"
+    git:
+      repo: https://github.com/urbanadventurer/WhatWeb
+      dest: ~/Tools/WhatWeb
+
+  - name: "Download Responder: https://github.com/lgandx/Responder.git"
+    git:
+      repo: https://github.com/lgandx/Responder
+      dest: ~/Tools/Responder
+
+  - name: "Discover: https://github.com/leebaird/discover"
+    git:
+      repo: https://github.com/leebaird/discover
+      dest: ~/Tools/Discover
+
+  - name: "Download Sublist3r: https://github.com/aboul3la/Sublist3r"
+    git:
+      repo: https://github.com/aboul3la/Sublist3r.git
+      dest: ~/Tools/Sublist3r
+
+  - name: "Download R3con1z3r: https://github.com/abdulgaphy/r3con1z3r"
+    git:
+      repo: https://github.com/abdulgaphy/r3con1z3r
+      dest: ~/Tools/reconizer
+
+  - name: "Th3Inspecter: https://github.com/Moham3dRiahi/Th3inspector"
+    git:
+      repo: https://github.com/Moham3dRiahi/Th3inspector
+      dest: ~/Tools/Th3Inspecter
+
+  - name: "Download Photon: https://github.com/s0md3v/Photon"
+    git:
+      repo: https://github.com/s0md3v/Photon
+      dest: ~/Tools/Photon
+
+  - name: "Download DNSRecon: https://github.com/darkoperator/dnsrecon"
+    git:
+      repo: https://github.com/darkoperator/dnsrecon
+      dest: ~/Tools/dnsrecon
+
+  - name: "Download Impacket: https://github.com/CoreSecurity/impacket.git"
+    git:
+      repo: https://github.com/CoreSecurity/impacket
+      dest: ~/Tools/impacket
+
+  # ==========================================================#
   # Powershell Exploit via Kali:
-  # PSEmpire: https://github.com/EmpireProject/Empire
-  - git:
+  # ==========================================================#
+  - name: "Download PSEmpire: https://github.com/EmpireProject/Empire"
+    git:
       repo: https://github.com/EmpireProject/Empire
-      dest: ~/Tools/
-  # PS DeathStar: https://github.com/byt3bl33d3r/DeathStar
-  - git:
+      dest: ~/Tools/Empire
+
+  - name: "Download PS DeathStar: https://github.com/byt3bl33d3r/DeathStar"
+    git:
       repo: https://github.com/byt3bl33d3r/DeathStar
-      dest: ~/Tools/
+      dest: ~/Tools/DeathStar
 
   # ==========================================================#
   # Social Engineering / Phishing Tools
