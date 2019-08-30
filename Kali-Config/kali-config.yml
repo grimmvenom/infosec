@@ -12,24 +12,105 @@
     vars:
       packages:
       - fish
+      - python3
+      - python3-pip
       - git
       - terminator
+      - alacarte
+      - htop
+      - ntop
+      - iotop
+      # - gcc
 
+  # ==========================================================#
+  # Nmap Scripts:
+  # ==========================================================#
+  # echo ""; echo "[*] Installing nmap script: vmware-fingerprint.nse"
+  # git clone https://gist.github.com/10695801.git; mv 10695801/vmware-fingerprint.nse /usr/share/nmap/scripts; rm -r 10695801
+
+  # echo ""; echo "[*] Installing nmap script: ms15-034.nse"
+  # wget -O /usr/share/nmap/scripts/ms15-034.nse https://raw.githubusercontent.com/pr4jwal/quick-scripts/master/ms15-034.nse
+
+  # ==========================================================#
+  # Documentation:
+  # ==========================================================#
   # Download OWASP ASVS Documentation:
   - git:
       repo: https://github.com/OWASP/ASVS
-      dest: ~/Tools/OWASP/ASVS
+      dest: ~/Documents/OWASP-ASVS
   # Download Cheatsheets / Notes:
   - git:
       repo:  https://github.com/coreb1t/awesome-pentest-cheat-sheets
-      dest: ~/Tools/cheatsheets/pentest-cheatsheets
+      dest: ~/Documents/cheatsheets/
   # Download Wordlists
   - git:
       repo: https://github.com/danielmiessler/SecLists
-      dest: ~/Tools/wordlists/SecLists
+      dest: /usr/share/wordlists/
   - git:
       repo:  https://github.com/secfigo/Awesome-Fuzzing
-      dest: ~/Tools/wordlists/Awesome-Fuzzing
+      dest: /usr/share/wordlists/
   - git:
       repo: https://github.com/Hack-with-Github/Awesome-Hacking
-      dest: ~/Tools/wordlists/Awesome-Hacking
+      dest: /usr/share/wordlists/
+
+  # ==========================================================# 
+  # Recon / Enumeration Tools:
+  # ==========================================================#
+  # EyeWitness: https://github.com/FortyNorthSecurity/EyeWitness
+  - git:
+      repo: https://github.com/FortyNorthSecurity/EyeWitness
+      dest: ~/Tools/
+  # WhatWeb:  https://github.com/urbanadventurer/WhatWeb.git
+  - git:
+      repo: https://github.com/urbanadventurer/WhatWeb.git
+      dest: ~/Tools/
+  # Responder: https://github.com/lgandx/Responder.git
+  - git:
+      repo: https://github.com/lgandx/Responder.git
+      dest: ~/Tools/
+  # Discover: https://github.com/leebaird/discover
+  - git:
+      repo: https://github.com/leebaird/discover
+      dest: ~/Tools/
+  # Sublist3r: https://github.com/aboul3la/Sublist3r.git
+  - git:
+      repo: https://github.com/aboul3la/Sublist3r.git
+      dest: ~/Tools/
+  # R3con1z3r: https://github.com/abdulgaphy/r3con1z3r
+  - git:
+      repo: https://github.com/abdulgaphy/r3con1z3r
+      dest: ~/Tools/
+  # Th3Inspecter: https://github.com/Moham3dRiahi/Th3inspector
+  - git:
+      repo: https://github.com/Moham3dRiahi/Th3inspector
+      dest: ~/Tools/
+  # Photon: https://github.com/s0md3v/Photon
+  - git:
+      repo: https://github.com/s0md3v/Photon
+      dest: ~/Tools/
+  # DNS Recon: https://github.com/darkoperator/dnsrecon
+  - git:
+      repo: https://github.com/darkoperator/dnsrecon
+      dest: ~/Tools/
+  # Impacket: https://github.com/CoreSecurity/impacket.git
+  - git:
+      repo: https://github.com/CoreSecurity/impacket.git
+      dest: ~/Tools/
+
+  # Powershell Exploit via Kali:
+  # PSEmpire: https://github.com/EmpireProject/Empire
+  - git:
+      repo: https://github.com/EmpireProject/Empire
+      dest: ~/Tools/
+  # PS DeathStar: https://github.com/byt3bl33d3r/DeathStar
+  - git:
+      repo: https://github.com/byt3bl33d3r/DeathStar
+      dest: ~/Tools/
+
+  # ==========================================================#
+  # Social Engineering / Phishing Tools
+  # ==========================================================#
+  # Phishery: https://github.com/ryhanson/phishery
+  #- git:
+  #    repo: https://github.com/ryhanson/phishery
+  #    dest: ~/Tools/

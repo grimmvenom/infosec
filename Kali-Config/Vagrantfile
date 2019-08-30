@@ -1,11 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# All Vagrant configuration is done below. The "2" in Vagrant.configure
-# configures the configuration version (we support older styles for
-# backwards compatibility). Please don't change it unless you know what
-# you're doing.
-
 # The most common configuration options are documented and commented below.
 # For a complete reference, please see the online documentation at
 # https://docs.vagrantup.com.
@@ -14,22 +9,30 @@
 # boxes at https://vagrantcloud.com/search.
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "offensive-security/kali-linux"
-  config.vm.box_check_update = true
-  config.vm.hostname = "Silence"
-  config.vm.provider :virtualbox do |v|
-    v.name = "Silence"
-    v.memory = 4096
-    v.cpus = 2
-    v.gui = true
-  end
-  config.vm.network "public_network",
-    use_dhcp_assigned_default_route: true,
-    bridge: "en0: Wi-Fi (AirPort)"
-  config.vm.boot_timeout = 350
-  config.vm.provision "ansible_local" do |ansible|
-    ansible.playbook = "kali-config.yml"
-  end
+  config.vm.define :silence do |silence_config|
+    silence_config.vm.hostname = "Silence"
+    silence_config.vm.box = "offensive-security/kali-linux"
+    silence_config.vm.box_check_update = true
+    # silence_config.vm.boot_timeout = 350
+    # Defind Virtualbox VM Specifications
+    silence_config.vm.provider :virtualbox do |v|
+      v.name = "Silence"
+      v.memory = 4096
+      v.cpus = 2
+      v.gui = true
+    end
+    # silence_config.vm.synced_folder "~/Scripts", "~/shared_dir"
 
-  # config.vm.provision :shell, :path => "bootstrap.sh"
+    # Configure NIC
+    silence_config.vm.network "public_network",
+      use_dhcp_assigned_default_route: true,
+      bridge: "en0: Wi-Fi (AirPort)"
+
+    # Run Ansible Configuration
+    silence_config.vm.provision "ansible_local" do |ansible|
+      ansible.playbook = "kali-config.yml"
+    end
+
+  # silence_config.vm.provision :shell, :path => "bootstrap.sh"
+  end
 end
