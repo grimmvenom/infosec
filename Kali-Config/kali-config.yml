@@ -11,15 +11,19 @@
       name: "{{ packages }}"
     vars:
       packages:
-      - atom
       - fish
       - git
       - terminator
 
-  # Example clone a repo with separate git directory
+  # Download OWASP ASVS Documentation:
   - git:
       repo: https://github.com/OWASP/ASVS
       dest: ~/Tools/OWASP/ASVS
+  # Download Cheatsheets / Notes:
+  - git:
+      repo:  https://github.com/coreb1t/awesome-pentest-cheat-sheets
+      dest: ~/Tools/cheatsheets/pentest-cheatsheets
+  # Download Wordlists
   - git:
       repo: https://github.com/danielmiessler/SecLists
       dest: ~/Tools/wordlists/SecLists
@@ -29,6 +33,3 @@
   - git:
       repo: https://github.com/Hack-with-Github/Awesome-Hacking
       dest: ~/Tools/wordlists/Awesome-Hacking
-  - git:
-      repo:  https://github.com/coreb1t/awesome-pentest-cheat-sheets
-      dest: ~/Tools/cheatsheets/pentest-cheatsheets
