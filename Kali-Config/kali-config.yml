@@ -6,7 +6,8 @@
     apt:
       update_cache: yes
 
-  - name: "Installing list of packages"
+  - name: "Installing handy tools via package manager"
+    ignore_errors: 'yes'
     apt:
       name: "{{ packages }}"
     vars:
@@ -18,16 +19,99 @@
       - terminator
       - alacarte
       - htop
+      - virtualbox-guest-x11
+      - exiftool
+      - rpcbind
+      - rinetd
+      - jq
+      - awscli
+      - sharutils
+      - keepass2
+
+  - name: "Installing Python3 Packages"
+    pip:
+     name: "{{ packages }}"
+    vars:
+      packages:
+      - pyinstaller
+      - pipreqs
+      - truffleHog
+
+  # ==========================================================#
+  # Network Miner Setup
+  # ==========================================================#
+
+  - name: "Installing Network Miner pre-reqs"
+    apt:
+      name: "{{ packages}}"
+    vars:
+      packages:
+      - libssl-dev
+      - libssh2-1-dev
+      - libgpgme11
+      - libgpgme11-dev
+      - libmono-system-windows-forms4.0-cil
+      - libmono-system-web4.0-cil
+      - libmono-system-net4.0-cil
+      - libmono-system-runtime-serialization4.0-cil
+      - libmono-system-xml-linq4.0-cil
       # - gcc
+
+  - name: "Download network miner"
+    get_url:
+      url: https://www.netresec.com/?download=NetworkMiner
+      dest: /root/Downloads/nm.zip
+
+  - name: "Create /opt/NetworkMiner"
+    file:
+      path: /opt/NetworkMiner
+      state: directory
+      mode: '0755'
+
+  - name: "Extract nm.zip into /opt/NetworkMiner"
+    unarchive:
+      src: /root/Downloads/nm.zip
+      dest: /opt/NetworkMiner/
+
+  - name: "Update NetworkMiner File Permissions"
+    file:
+      path: /opt/NetworkMiner/NetworkMiner_2-4/NetworkMiner.exe
+      mode: 'u+rx'
+    file:
+      path: /opt/NetworkMiner/NetworkMiner_2-4/AssembledFiles/
+      state: 'directory'
+      recurse: 'yes'
+      mode: 'g+w,o+w'
+    file:
+      path: /opt/NetworkMiner/NetworkMiner_2-4/Captures/
+      state: 'directory'
+      recurse: 'yes'
+      mode: 'g+w,o+w'
+
+      # root@OS14526:/opt/NetworkMiner_2-2# chmod +x NetworkMiner.exe
+      # root@OS14526:/opt/NetworkMiner_2-2# chmod -R go+w AssembledFiles/
+      # root@OS14526:/opt/NetworkMiner_2-2# chmod -R go+w Captures/
 
   # ==========================================================#
   # Nmap Scripts:
   # ==========================================================#
-  # echo ""; echo "[*] Installing nmap script: vmware-fingerprint.nse"
-  # git clone https://gist.github.com/10695801.git; mv 10695801/vmware-fingerprint.nse /usr/share/nmap/scripts; rm -r 10695801
+  - name: "Download nmap banner-plus.nse"
+    get_url:
+      url: https://raw.githubusercontent.com/grimmvenom/infosec/master/Scripts/nmap_scripts/banner-plus.nse
+      dest: /usr/share/nmap/scripts/banner-plus.nse
+      # mode: '0440'
 
-  # echo ""; echo "[*] Installing nmap script: ms15-034.nse"
-  # wget -O /usr/share/nmap/scripts/ms15-034.nse https://raw.githubusercontent.com/pr4jwal/quick-scripts/master/ms15-034.nse
+  - name: "Download nmap ms15-034.nse"
+    get_url:
+      url: https://raw.githubusercontent.com/grimmvenom/infosec/master/Scripts/nmap_scripts/ms15-034.nse
+      dest: /usr/share/nmap/scripts/ms15-034.nse
+      # mode: '0440'
+
+  - name: "Download nmap vmware-fingerprint.nse"
+    get_url:
+      url: https://raw.githubusercontent.com/grimmvenom/infosec/master/Scripts/nmap_scripts/vmware-fingerprint.nse
+      dest: /usr/share/nmap/scripts/vmware-fingerprint.nse
+      # mode: '0440'
 
   # ==========================================================#
   # Documentation:
@@ -36,13 +120,13 @@
   - name: "Download ASVS Documentation"
     git:
       repo: https://github.com/OWASP/ASVS
-      dest: ~/Documents/OWASP-ASVS
+      dest: /root/Documents/OWASP-ASVS
 
   # Download Cheatsheets / Notes:
   - name: "Download Awesome-Pentest-Cheat-Sheets"
     git:
       repo:  https://github.com/coreb1t/awesome-pentest-cheat-sheets
-      dest: ~/Documents/cheatsheets/
+      dest: /root/Documents/cheatsheets/
   # Download Wordlists
   - name: "Download SecLists Wordlists"
     git:
@@ -62,66 +146,66 @@
   # ==========================================================#
 
   # Arachni Scanner:  https://github.com/Arachni/arachni/releases/download/v1.5.1/arachni-1.5.1-0.5.12-linux-x86_64.tar.gz
-  
+
   - name: "Download EyeWitness: https://github.com/FortyNorthSecurity/EyeWitness"
     git:
       repo: https://github.com/FortyNorthSecurity/EyeWitness
-      dest: ~/Tools/EyeWitness
+      dest: /root/Tools/EyeWitness
 
   - name: "Download WhatWeb:  https://github.com/urbanadventurer/WhatWeb.git"
     git:
       repo: https://github.com/urbanadventurer/WhatWeb
-      dest: ~/Tools/WhatWeb
+      dest: /root/Tools/WhatWeb
 
   - name: "Download Responder: https://github.com/lgandx/Responder.git"
     git:
       repo: https://github.com/lgandx/Responder
-      dest: ~/Tools/Responder
+      dest: /root/Tools/Responder
 
   - name: "Discover: https://github.com/leebaird/discover"
     git:
       repo: https://github.com/leebaird/discover
-      dest: ~/Tools/Discover
+      dest: /root/Tools/Discover
 
   - name: "Download Sublist3r: https://github.com/aboul3la/Sublist3r"
     git:
       repo: https://github.com/aboul3la/Sublist3r.git
-      dest: ~/Tools/Sublist3r
+      dest: /root/Tools/Sublist3r
 
   - name: "Download R3con1z3r: https://github.com/abdulgaphy/r3con1z3r"
     git:
       repo: https://github.com/abdulgaphy/r3con1z3r
-      dest: ~/Tools/reconizer
+      dest: /root/Tools/reconizer
 
   - name: "Th3Inspecter: https://github.com/Moham3dRiahi/Th3inspector"
     git:
       repo: https://github.com/Moham3dRiahi/Th3inspector
-      dest: ~/Tools/Th3Inspecter
+      dest: /root/Tools/Th3Inspecter
 
   - name: "Download Photon: https://github.com/s0md3v/Photon"
     git:
       repo: https://github.com/s0md3v/Photon
-      dest: ~/Tools/Photon
+      dest: /root/Tools/Photon
 
   - name: "Download DNSRecon: https://github.com/darkoperator/dnsrecon"
     git:
       repo: https://github.com/darkoperator/dnsrecon
-      dest: ~/Tools/dnsrecon
+      dest: /root/Tools/dnsrecon
 
   - name: "Download Impacket: https://github.com/CoreSecurity/impacket.git"
     git:
       repo: https://github.com/CoreSecurity/impacket
-      dest: ~/Tools/impacket
+      dest: /root/Tools/impacket
 
   - name: "Download BloodHound: https://github.com/BloodHoundAD/BloodHound"
     git:
       repo: https://github.com/BloodHoundAD/BloodHound
-      dest: ~/Tools/BloodHound
+      dest: /root/Tools/BloodHound
 
   - name: "Download RedTeam Scripts: https://github.com/threatexpress/red-team-scripts"
     git:
       repo: https://github.com/threatexpress/red-team-scripts
-      dest: ~/Tools/RedTeamScripts
+      dest: /root/Tools/RedTeamScripts
 
   # ==========================================================#
   # Powershell Exploit via Kali:
@@ -129,17 +213,17 @@
   - name: "Download PSEmpire: https://github.com/EmpireProject/Empire"
     git:
       repo: https://github.com/EmpireProject/Empire
-      dest: ~/Tools/PowerShell/Empire
+      dest: /root/Tools/PowerShell/Empire
 
   - name: "Download PowerSploit: https://github.com/PowerShellMafia/PowerSploit/"
     git:
       repo: https://github.com/PowerShellMafia/PowerSploit
-      dest: ~/Tools/PowerShell/PowerSploit
+      dest: /root/Tools/PowerShell/PowerSploit
 
   - name: "Download PS DeathStar: https://github.com/byt3bl33d3r/DeathStar"
     git:
       repo: https://github.com/byt3bl33d3r/DeathStar
-      dest: ~/Tools/PowerShell/DeathStar
+      dest: /root/Tools/PowerShell/DeathStar
 
   # ==========================================================#
   # Social Engineering / Phishing Tools
@@ -147,4 +231,4 @@
   # Phishery: https://github.com/ryhanson/phishery
   #- git:
   #    repo: https://github.com/ryhanson/phishery
-  #    dest: ~/Tools/
+  #    dest: /root/Tools/
