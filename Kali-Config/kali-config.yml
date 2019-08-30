@@ -60,6 +60,9 @@
   # ==========================================================#
   # Recon / Enumeration Tools:
   # ==========================================================#
+
+  # Arachni Scanner:  https://github.com/Arachni/arachni/releases/download/v1.5.1/arachni-1.5.1-0.5.12-linux-x86_64.tar.gz
+  
   - name: "Download EyeWitness: https://github.com/FortyNorthSecurity/EyeWitness"
     git:
       repo: https://github.com/FortyNorthSecurity/EyeWitness
@@ -110,18 +113,33 @@
       repo: https://github.com/CoreSecurity/impacket
       dest: ~/Tools/impacket
 
+  - name: "Download BloodHound: https://github.com/BloodHoundAD/BloodHound"
+    git:
+      repo: https://github.com/BloodHoundAD/BloodHound
+      dest: ~/Tools/BloodHound
+
+  - name: "Download RedTeam Scripts: https://github.com/threatexpress/red-team-scripts"
+    git:
+      repo: https://github.com/threatexpress/red-team-scripts
+      dest: ~/Tools/RedTeamScripts
+
   # ==========================================================#
   # Powershell Exploit via Kali:
   # ==========================================================#
   - name: "Download PSEmpire: https://github.com/EmpireProject/Empire"
     git:
       repo: https://github.com/EmpireProject/Empire
-      dest: ~/Tools/Empire
+      dest: ~/Tools/PowerShell/Empire
+
+  - name: "Download PowerSploit: https://github.com/PowerShellMafia/PowerSploit/"
+    git:
+      repo: https://github.com/PowerShellMafia/PowerSploit
+      dest: ~/Tools/PowerShell/PowerSploit
 
   - name: "Download PS DeathStar: https://github.com/byt3bl33d3r/DeathStar"
     git:
       repo: https://github.com/byt3bl33d3r/DeathStar
-      dest: ~/Tools/DeathStar
+      dest: ~/Tools/PowerShell/DeathStar
 
   # ==========================================================#
   # Social Engineering / Phishing Tools
