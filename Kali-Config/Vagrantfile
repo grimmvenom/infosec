@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
     silence_config.vm.hostname = "Silence"
     silence_config.vm.box = "offensive-security/kali-linux"
     silence_config.vm.box_check_update = true
-    # silence_config.vm.boot_timeout = 60
+    silence_config.vm.boot_timeout = 60
     # Defind Virtualbox VM Specifications
     silence_config.vm.provider :virtualbox do |v|
       v.name = "Silence"
@@ -29,7 +29,7 @@ Vagrant.configure("2") do |config|
       bridge: "en0: Wi-Fi (AirPort)"
 
     # Suggest Adding Wait Timer before Ansible configuration
-    
+
     # Run Ansible Configuration
     silence_config.vm.provision "ansible_local" do |ansible|
       ansible.playbook = "kali-config.yml"
