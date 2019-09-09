@@ -95,7 +95,7 @@ class ActiveRecon:
 		self.ping_args = '-n -Pn -v -sn'
 		# self.ping_args = '-n -Pn -v -sT -p 21,23,80,443,139,445,3389'
 		self.basic_args = '-n -Pn -v -O -sV -sT --top-ports 200 --script=banner-plus,smb-os-discovery'
-		self.advanced_args = '-n -Pn -v -O -sV -sT -sU --top-ports 300 --script=banner-plus,smb-os-discovery'
+		self.advanced_args = '-n -Pn -v -O -sV -sT -sU --top-ports 500 --script=banner-plus,smb-os-discovery'
 		self.full_args = '-n -Pn -v -O -sV -sT -sU -p0-65535 --script=banner-plus,smb-os-discovery'
 		self.scan_type = str()
 		self.local_data = self.get_local_info()  # Get Attacking Machine Information
