@@ -11,7 +11,7 @@
 Vagrant.configure("2") do |config|
   config.vm.define :silence do |silence_config|
     silence_config.vm.hostname = "Silence"
-    silence_config.vm.box = "offensive-security/kali-linux"
+    silence_config.vm.box = "kalilinux/rolling"
     silence_config.vm.box_check_update = true
     silence_config.vm.boot_timeout = 60
     # Defind Virtualbox VM Specifications

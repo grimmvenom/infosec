@@ -29,13 +29,12 @@
       - keepass2
 
   - name: "Installing Python3 Packages"
-    pip:
-     name: "{{ packages }}"
-    vars:
-      packages:
-      - pyinstaller
-      - pipreqs
-      - truffleHog
+    shell: pip3 install pyinstaller pipreqs truffleHog
+    #pip3:
+      #name:
+      #- pyinstaller
+      #- pipreqs
+      #- truffleHog
 
   # ==========================================================#
   # Network Miner Setup
@@ -58,17 +57,20 @@
       # - gcc
 
   - name: "Download network miner"
+    ignore_errors: 'yes'
     get_url:
       url: https://www.netresec.com/?download=NetworkMiner
       dest: /root/Downloads/nm.zip
 
   - name: "Create /opt/NetworkMiner"
+    ignore_errors: 'yes'
     file:
       path: /opt/NetworkMiner
       state: directory
       mode: '0755'
 
   - name: "Extract nm.zip into /opt/NetworkMiner"
+    ignore_errors: 'yes'
     unarchive:
       src: /root/Downloads/nm.zip
       dest: /root/Downloads/
@@ -92,6 +94,7 @@
       mode: 'g+w,o+w'
 
   - name: "Network Miner Cleanup"
+    ignore_errors: 'yes'
     shell: rm -r /root/Downloads/NetworkMiner*
     shell: rm -r /root/Downloads/nm.zip
 
