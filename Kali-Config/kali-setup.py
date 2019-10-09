@@ -9,6 +9,9 @@ author:
 GrimmVenom <grimmvenom@gmail.com>
 Tony Karre @tonykarre (https://github.com/tonykarre/Vagrant-Kali-Project-Setup-Tool)
 
+Resources:
+	https://www.altaro.com/hyper-v/understanding-working-vhdx-files/
+	https://www.tecmint.com/create-virtual-harddisk-volume-in-linux/
 """
 
 import os, sys, time, argparse
@@ -33,9 +36,9 @@ def get_arguments():
 		arguments.vm_dir = str(Path.home()) + os.sep + "Virtual_Machines"
 	
 	if not arguments.vm_name:
-		arguments.vm_name = input("Please enter virtual machine / project name: ")
+		arguments.vm_name = input("Please enter virtual machine / project name: ").title()
 		if len(arguments.vm_name) > 1:
-			print("VM / Project name set to:  " + str(arguments.vm_name))
+			print("\nVM / Project name set to:  " + str(arguments.vm_name))
 		else:
 			parser.error("Please enter a valid VM / Project name")
 	
@@ -44,9 +47,10 @@ def get_arguments():
 
 def setup_vm_dir():
 	if not os.path.exists(arguments.vm_dir + os.sep + arguments.vm_name):  # Check if project directories exist
+		print("\n[+] Creating Project: " + str(arguments.vm_name))
 		os.makedirs(arguments.vm_dir + os.sep + arguments.vm_name)  # Creates project directories if they do not exist
 	else:
-		print("Project already exists!")
+		print("\n[+] Project" + str(arguments.vm_name) + " already exists!")
 
 
 def determine_nic():
@@ -55,6 +59,7 @@ def determine_nic():
 	gateway = gws['default'][netifaces.AF_INET]
 	print("NIC in use: ", str(gateway[1]))
 	print("NIC IP: ", str(gateway[0]))
+	return gateway[0], gateway[1]
 
 
 def verify_application(app):
@@ -134,16 +139,88 @@ def patch_vagrant():
 		print("[+] " + str(full_path) + " Already Patched!")
 
 
+def generate_vagrantfile():
+	vagrantfile_path = arguments.vm_dir + os.sep + arguments.vm_name + os.sep + 'vagrantfile'
+	if not os.path.exists(vagrantfile_path):
+		data = "# -*- mode: ruby -*-\n"
+		data += "# vi: set ft=ruby :\n"
+		data += "\n# The most common configuration options are documented and commented below.\n"
+		data += "# For a complete reference, please see the online documentation at https://docs.vagrantup.com.\n"
+		data += "# Every Vagrant development environment requires a box. You can search for boxes at https://vagrantcloud.com/search.\n"
+		data += 'Vagrant.configure("2") do |config|\n'
+		data += "\tconfig.vm.define :silence do |vm_config|\n"
+		data += '\t\tvm_config.vm.hostname = "' + str(arguments.vm_name) + '"\n'
+		data += '\t\tvm_config.vm.box = "' + str(virtualImage) + '"\n'
+		data += "\t\tvm_config.vm.box_check_update = true\n"
+		data += "\t\tvm_config.vm.boot_timeout = 120\n"
+		data += "\t\t# Defind Virtualbox VM Specifications\n"
+		data += "\t\tvm_config.vm.provider :virtualbox do |v|\n"
+		data += '\t\t\tv.name = "' + str(arguments.vm_name) + '"\n'
+		data += "\t\t\tv.memory = 4096\n"
+		data += "\t\t\tv.cpus = 2\n"
+		data += "\t\t\tv.gui = true\n"
+		data += "\t\tend\n"
+		data += '\t\t# vm_config.vm.synced_folder "~/Scripts", "~/shared_dir"\n'
+		data += "\n\t\t# Configure NIC\n"
+		data += '\t\tvm_config.vm.network "public_network", use_dhcp_assigned_default_route: true, bridge: "' + str(nic) + '"\n\n'
+		data += "\t\t# Suggest Adding Wait Timer before Ansible configuration\n"
+		data += "\t\t# Run Ansible Configuration\n"
+		data += '\t\tvm_config.vm.provision "ansible_local" do |ansible|\n'
+		data += '\t\t\tansible.playbook = "ansible.yml"\n'
+		data += "\t\tend\n"
+		data += '\t# vm_config.vm.provision :shell, :path => "bootstrap.sh"\n'
+		data += "\tend\n"
+		data += "end\n"
+		# print(data)
+		f = open(vagrantfile_path, 'w')
+		f.write(data)  # python will convert \n to os.linesep
+		f.close()  # you can omit in most cases as
+		print("[+] Generated vagrantfile " + str(vagrantfile_path) + "\n")
+	else:
+		print("[-] vagrantfile already exists!")
+		print("Will not generate new vagrantfile in case modifications were made to: " + str(vagrantfile_path))
+	return vagrantfile_path
+
+
+def create_linux_virtual_drive():
+	# https://www.tecmint.com/create-virtual-harddisk-volume-in-linux/
+	print("Creating VHD on Linux")
+	# Create 1 GB VHD Image
+	# dd if=/dev/zero of=<project>.img bs=1M count=1024
+	
+	# Format as EXT4 filesystem
+	# sudo mkfs -t ext4 ./<project>.img
+	
+	# Mount the VHD to access it's volume
+	# sudo mkdir /mnt/<project>
+	# sudo mount -t auto -o loop ./1GB_HDD.img /mnt/<project>
+	
+	# To Unmount:
+	# sudo umount /mnt/<project>
+	# sudo rm ./<project>.img
+	
+	# vagrant "init" "--template" "`"$erbtemplatefile`"" "--output" "`"$($projfolder)\Vagrantfile`"" "$vagrantbox"
+
+
 if __name__ == "__main__":
 	virtualDiskSize = 64
 	virtualImage = "kalilinux/rolling"
 	
 	arguments = get_arguments()
-	setup_vm_dir()
-	determine_nic()
-	check_requirements()
-	patch_vagrant()
-	# Dynamically Build Vagrant File
-	# Vagrant Up
-	# Vagrant Halt
-	# Encypt virtual hard disk
+	setup_vm_dir()  # Prep Project Folder
+	ip, nic = determine_nic()  # Get NIC information
+	check_requirements()  # Verify necessary applications are installed
+	patch_vagrant()  # Patch Vagrants' action.rb file
+	vagrantfile_path = generate_vagrantfile()  # Generate Vagrantfile in project folder
+	
+	# $Virtualdiskfile = "$projfolder\$($projname).vhdx"
+	# Create VirtualHardDisk
+	# Mount Virtual HD
+	# encrypt Virtual HD
+	#   # Run the Vagrant init process to build our unique Vagrantfile from the template
+	#
+	#   Write-Host "[+] Running `"vagrant init`""
+	#
+	#   & $vagrantexe "init" "--template" "`"$erbtemplatefile`"" "--output" "`"$($projfolder)\Vagrantfile`"" "$vagrantbo
+	# Move / download ansible.yml file
+	# Vagrant Provision

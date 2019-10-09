@@ -175,4 +175,4 @@
   # Phishery: https://github.com/ryhanson/phishery
   #- git:
   #    repo: https://github.com/ryhanson/phishery
-  #    dest: /opt/
+  #    dest: /opt/phishery
