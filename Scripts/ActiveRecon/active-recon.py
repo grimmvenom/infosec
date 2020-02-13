@@ -15,8 +15,8 @@ import argparse, time, os, sys, itertools, json
 from datetime import datetime
 import requests, socket, ipaddress
 from netifaces import interfaces, ifaddresses, AF_INET
-import couchdb
 from uuid import uuid4
+# import couchdb
 
 # ToDO:
 # SMB Enum
@@ -94,8 +94,8 @@ class ActiveRecon:
 			self.arguments.database = self.date
 		self.ping_args = '-n -Pn -v -sn'
 		# self.ping_args = '-n -Pn -v -sT -p 21,23,80,443,139,445,3389'
-		self.basic_args = '-n -Pn -v -O -sV -sT --top-ports 200 --script=banner-plus,smb-os-discovery'
-		self.advanced_args = '-n -Pn -v -O -sV -sT -sU --top-ports 500 --script=banner-plus,smb-os-discovery'
+		self.basic_args = '-n -Pn -v -O -sV -sT --top-ports 5000 -T3 --script=banner-plus,smb-os-discovery'
+		self.advanced_args = '-n -Pn -v -O -sV -sT --top-ports 500 -T3 --script=banner-plus,smb-os-discovery'
 		self.full_args = '-n -Pn -v -O -sV -sT -sU -p0-65535 --script=banner-plus,smb-os-discovery'
 		self.scan_type = str()
 		self.local_data = self.get_local_info()  # Get Attacking Machine Information
@@ -296,7 +296,7 @@ class ActiveRecon:
 			with open(output_file, 'w') as outfile:
 				outfile.write(json.dumps(parsed, indent=4, sort_keys=True))
 				outfile.close()
-			self.results_to_couchdb(scan_results)
+			# self.results_to_couchdb(scan_results)
 	
 	def nmap_async(self, query):  # Perform Full scan and attempt to get host info such as hostname and OS, Caution! Will take a long time to execute
 		# targets = str(','.join(map(str, self.arguments.targets)))
@@ -314,6 +314,7 @@ class ActiveRecon:
 		self.async_scan.wait(2)  # you can do whatever you want but I choose to wait after the end of the scan
 		# self.async_scan.stop()
 	
+	"""
 	def results_to_couchdb(self, data):
 		print("Parsing Results to database")
 		try:
@@ -327,7 +328,8 @@ class ActiveRecon:
 		except Exception as e:
 			print(e)
 			pass
-		
+	"""
+
 
 if __name__ == "__main__":
 	ActiveRecon = ActiveRecon()
