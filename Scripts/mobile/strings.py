@@ -10,10 +10,14 @@ myfile = open("strings.txt", "w")
 
 for root, directories, filenames in os.walk(directory):
     for filename in filenames:
-        result = os.path.join(root, filename)
-        myfile.write(">>>>> " + result + " <<<<<<\n")
-        test = subprocess.check_output(["strings", result])
-        myfile.write(test.decode("utf-8"))
-        myfile.write("\n")
+        try:
+            result = os.path.join(root, filename)
+            myfile.write(">>>>> " + result + " <<<<<<\n")
+            test = subprocess.check_output(["strings", result])
+            myfile.write(test.decode("utf-8"))
+            myfile.write("\n")
+        except Exception as e:
+            print("Error: ", e, "\n", filename)
+            pass
 
 print('Done Parsing')
